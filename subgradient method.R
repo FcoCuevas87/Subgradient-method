@@ -71,7 +71,7 @@ inte<-function(arg,par,par2,cova,fgrad,j){
 }
 #Waageralgo
 fwag<-function(d,par,par2,j){
-  return(cos(par2[j]*d))*(1*(d<=0.2) + 0* (d>=0.2))
+  return(cos(par2[j]*d)*(1*(d<=0.2) + 0* (d>=0.2)))
     
 }
 

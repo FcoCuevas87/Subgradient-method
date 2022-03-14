@@ -101,14 +101,14 @@ sum(a)
 par=c(0.0005,0.0005,0.0005,0.0005,0.0005)
 par2=c(0.05,0.1,0.15,0.2,0.25)
 alp=0.5
-k=0.5
+k2=0.5
 for (k in 1:20){
   para=par
   t=2
   print(par)
   for (i in 1:(length(par))){
      x=-est(para,par2,fwag,cove,i)+1/t*para[i]
-     par[i]=t*sign(x)*max(c(abs(x)-alp*k,0))/(t*(1+alp*(1-k))+1)
+     par[i]=t*sign(x)*max(c(abs(x)-alp*k2,0))/(t*(1+alp*(1-k2))+1)
   }
 }
 

@@ -13,7 +13,7 @@ Z<-attr(X,"Lambda")
 plot(Z)
 points(X,pch=16)
 X
-
+rmax=0.2
 P<-closepairs(X,0.2,twice = FALSE)
 
 #funciones necesarias
@@ -28,7 +28,7 @@ cove<-function(d,par,par2){
   return(a)
 }
 fwag<- function(d,par,par2,j){
-  return(exp(par)*exp(-d/par2[j])*(1*(d<=0.2) + 0* (d>=0.2)))
+return(exp(par[j])*exp(-d/par2[j])*(1*(d<=0.2) + 0* (d>=0.2)))
 }
 #integral1 
 integrand1<-function(arg,par,par2,j){
@@ -67,9 +67,6 @@ grad<-function(par,par2,j){
   ver=sum(a)-(intensity(X))^2*inte
   return(ver)
 }
-a=cbind(c(1,2),c(3,4))
-b[1,]
-jac=matrix(nrow=2,ncol=2)
 jacob<-function(par,par2){
   x0<-runifpoint(mc,win=square(1))
   y0<-runifpoint(mc,win=square(1))
@@ -78,29 +75,27 @@ jacob<-function(par,par2){
   for (i in 1:length(par)){
     for (j in 1:length(par) ){
       temp=0
-     temp=-(intensity(X))^2*(1/mc)^2*sum(integrandj(dU$d,par,par2,i,j))
-     if(i==j){
-       temp=temp+sum(fwag(P$d,par,par2,i))-(intensity(X))^2*(1/mc)^2*sum(integrandM(dU$d,par,par2,i))
-     }
-     jac[i,j]=temp
+      temp=-(intensity(X))^2*(1/mc)^2*sum(integrandj(dU$d,par,par2,i,j))
+      if(i==j){
+        temp=temp+sum(fwag(P$d,par,par2,i))-(intensity(X))^2*(1/mc)^2*sum(integrandM(dU$d,par,par2,i))
+      }
+      jac[i,j]=temp
     }
-  
-  }
+    }}
 djacob<-function(par,par2){
-  x0<-runifpoint(mc,win=square(1))
-  y0<-runifpoint(mc,win=square(1))
-  dU<-crosspairs(x0,y0,rmax,what="ijd")
-  jac=c()
-  for (i in 1:length(par)){
-    temp=0
-    temp=-(intensity(X))^2*(1/mc)^2*sum(integrandj(dU$d,par,par2,i,i))
-    temp=temp+sum(fwag(P$d,par,par2,i))-(intensity(X))^2*(1/mc)^2*sum(integrandM(dU$d,par,par2,i))
-    jac[i]=temp
+    x0<-runifpoint(mc,win=square(1))
+    y0<-runifpoint(mc,win=square(1))
+    dU<-crosspairs(x0,y0,rmax,what="ijd")
+    jac=c()
+    for (i in 1:length(par)){
+      temp=0
+      temp=-(intensity(X))^2*(1/mc)^2*sum(integrandj(dU$d,par,par2,i,i))
+      temp=temp+sum(fwag(P$d,par,par2,i))-(intensity(X))^2*(1/mc)^2*sum(integrandM(dU$d,par,par2,i))
+      jac[i]=temp
     }
-  return(jac)
+    return(jac)
 }
-c(1,2)*c(1,2)
-1==2
+
 mc=1000
 #varianzas (parametros a estimar)
 par=c(log(0.5),log(0.25))
@@ -108,44 +103,43 @@ par=c(log(0.5),log(0.25))
 par2=c(0.05,0.15)
 alp=0.000001
 lam=0
-para=par
-jac=jacob(par,par2)
-jac
-jac=solve(jac)
-gr=gradien(par,par2)
-gr
-t(gr)
-print(jac%*%gradien(par,par2))
+print(jacob(par,par2))
 for (k in 1:200){
-  para=par
-  jac=djacob(par,par2)
-  jac=jac^{-1}
-  x0=para-(jac*gradien(par,par2))
-  par=x0
-  print(exp(par))
+    para=par
+    jac=djacob(par,par2)
+    jac=jac^{-1}
+    x0=para-(jac*gradien(par,par2))
+    par=x0
+    print(exp(par))
 }
-a=c(2,4)
-print(a^{-1})
 for (k in 1:200){
-  para=par
-  jac=jacob(par,par2)
-  jac=solve(jac)
-  x0=para-(jac%*%gradien(par,par2))[,1]
-  par=x0
-  print(exp(par))
-}
-a=c(2,2)
-a
-ma=matrix(data=c(1,2,3,4),nrow=2,ncol=2)
-ma
-print(ma%*%a)
-a=(ma%*%a)[,1]
-a
-for (k in 1:200){
-  para=par
-  print(par)
-  for (i in 1:(length(par))){
-    x0=para[i]-alp*grad(par,par2,i)
-    par[i]=sign(x0)*pmax(abs(x0)-lam*alp,0)}
+    para=par
+    x0<-runifpoint(mc,win=square(1))
+    y0<-runifpoint(mc,win=square(1))
+    dU<-crosspairs(x0,y0,rmax,what="ijd")
+    jac=matrix(nrow=length(par),ncol=length(par))
+    for (i in 1:length(par)){
+      for (j in 1:length(par) ){
+        temp=0
+        temp=-(intensity(X))^2*(1/mc)^2*sum(integrandj(dU$d,par,par2,i,j))
+        if(i==j){
+          temp=temp+sum(fwag(P$d,par,par2,i))-(intensity(X))^2*(1/mc)^2*sum(integrandM(dU$d,par,par2,i))
+        }
+        jac[i,j]=temp
+      }
+    }
+    #funcion jacob esta dando problemas
+    #jac=jacob(par,par2)
+    jac=solve(jac)
+    x0=para-(jac%*%gradien(par,par2))[,1]
+    par=x0
+    print(exp(par))
 }
 
+for (k in 1:200){
+    para=par
+    print(par)
+    for (i in 1:(length(par))){
+      x0=para[i]-alp*grad(par,par2,i)
+      par[i]=sign(x0)*pmax(abs(x0)-lam*alp,0)}
+}

@@ -35,7 +35,7 @@ inte2<-function(d,par1,par2){
 }
 
 inte11<-function(d,par1,par2){
-  re=exp(par1^2*cove(d,par2))*cove(d,par2)*(1+2*par1^1*cove(d,par2))
+  re=exp(par1^2*cove(d,par2))*cove(d,par2)*(1+2*par1^2*cove(d,par2))
   re=sum(re)
   return(re)
 }
@@ -51,7 +51,7 @@ inte21<-function(d,par1,par2){
   return(re)
 }
 inte22<-function(d,par1,par2){
-  re=exp(par1^2*cove(d,par2))*cove(d,par2)*exp(-par2)*d*(cove(d,par2)*exp(-par2)*d*par1^2+cove(d,par2)*exp(-par2)*d-1)
+  re=exp(par1^2*cove(d,par2))*cove(d,par2)*exp(-par2)*d*(cove(d,par2)*exp(-par2)*d*par1^2+exp(-par2)*d-1)
   re=sum(re)
   return(re)
 }
@@ -96,24 +96,33 @@ for (i in 1:200){
   s2=sum2(P$d,par2)
   s3=sum3(P$d,par2)
   #remplazamos los valores de los gradientes
-  e1=2*par1*s1-rho^2*par1*i1
-  e2=par1^2*s2-rho^2*par1^2*i2
+  e1=2*par1*s1-2*rho*par1*i1
+  e2=par1^2*s2-rho*par1^2*i2
   #remplazamos en los valores de la jacobiana
-  j11=2*s1-2*rho^2*i11
-  s2
-  j12=2*par1*s2-2*rho^2*par1*i12
-  j21=2*par1^2*s2-rho^2*par1*i21
-  j22=par1^2*s3-rho^2*par1^2*i22
+  j11=2*s1-2*rho*i11
+  j12=2*par1*s2-2*rho*par1*i12
+  j21=2*par1*s2-2*rho*par1*i21
+  j22=par1^2*s3-rho*par1^2*i22
   c(j11,j21,j12,j22)
   jac=matrix(c(j11,j21,j12,j22),nrow=2,ncol=2)
-  jac
   jac=solve(jac)
   x=c(par1,par2)
-  x=x-(jac%*%c(e1,e2))[,1]*0.01
+  x=x-(jac%*%c(e1,e2))[,1]*0.1
   par1=x[1]
   par2=x[2]
   print(c(par1^2,exp(par2)))
 }
+
+
+mc=1000
+rho=intensity(X)^2
+x0<-runifpoint(mc,win=W)
+y0<-runifpoint(mc,win=W)
+dU<-crosspairs(x0,y0,rmax,what="ijd")
+P<-closepairs(X,0.2,twice = TRUE)
+par1=1
+par2=log(0.15)
+
 for (i in 1:200){
   #obtenemos los valores de las integrales
   i1=(1/mc)^2*inte1(dU$d,par1,par2)
@@ -127,11 +136,11 @@ for (i in 1:200){
   s2=sum2(P$d,par2)
   s3=sum3(P$d,par2)
   #remplazamos los valores de los gradientes
-  e1=2*par1*s1-rho^2*par1*i1
-  e2=par1^2*s2-rho^2*par1^2*i2
+  e1=2*par1*s1-rho*par1*i1
+  e2=par1^2*s2-rho*par1^2*i2
   #remplazamos en los valores de la jacobiana
   j11=2*s1-2*rho^2*i11
-  j22=par1^2*s3-rho^2*par1^2*i22
+  j22=par1^2*s3-rho*par1^2*i22
   c(j11,j21,j12,j22)
   jac=matrix(c(j11,j21,j12,j22),nrow=2,ncol=2)
   jac
@@ -142,6 +151,7 @@ for (i in 1:200){
   par2=x[2]
   print(c(par1^2,exp(par2)))
 }
+
 
 c(par1^2,exp(par2))
 jac=matrix(c(11,21,12,22),nrow=2,ncol=2)

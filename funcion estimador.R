@@ -3,19 +3,19 @@ library(spatstat)
 library(cubature)
 #simulacion LGCP
 N=500
-sig=1
-W=square(1)
-Warea=area(W)
+sig=3
+W=square(1) ### 1.- Considerar el tamaño de la ventana en las integrales
+Warea=spatstat.geom::area(W)
 mu0=log(N/Warea)-sig/2
 phi=0.15
-X <- rLGCP(model="exp", mu=mu0, var=sig, scale=phi, win = W)
+X <- rLGCP(model="exp", mu=mu0, var=sig, scale=phi, win = W) ### (*).- Crear mi propio simulador de LGCP
 
 Z<-attr(X,"Lambda")
 plot(Z)
 points(X,pch=16)
 
-rmax <- 0.2
-P<-closepairs(X,0.2,twice = TRUE)
+rmax <- 0.2 ### 2.- Añadirlo como parte de las funciones que necesiten closepairs y crosspairs
+P<-closepairs(X,rmax,twice = TRUE) 
 #Supuestos:
 #Homogeneidad
 #Estacioneriedad
@@ -25,11 +25,12 @@ P<-closepairs(X,0.2,twice = TRUE)
 #la funcion est pide la cordenada que se desea calcular
 #Mejora entregar dos listas de parametros uno que sean lineales y otros no lineales
 
-lavn<- function(X,g,est,jac,inipar,tol,kmax,mc=1000){
+#Considerar diferentes w_{ij}
+lavn<- function(X,g,est,jac,inipar,tol,kmax,mc=1000, trace = TRUE){
   x0<-runifpoint(mc,win=W)
   y0<-runifpoint(mc,win=W)
-  dU<-crosspairs(x0,y0,0.2,what="ijd")
-  P<-closepairs(X,0.2,twice = TRUE)
+  dU<-crosspairs(x0,y0,rmax,what="ijd")
+  P<-closepairs(X,rmax,twice = TRUE)
   par=inipar
   for(i in 1:kmax){
     r=c()
@@ -47,9 +48,10 @@ lavn<- function(X,g,est,jac,inipar,tol,kmax,mc=1000){
     e=sqrt(sum((para-par)*(para-par)))/sqrt(sum(para*para))
     if(e<tol){
       return(par)}
-    print(c(par[1]^2,exp(par[2])))
+    if(trace) cat(c(par[1]^2,exp(par[2])), i, "\n")
   }
-  return(par)}
+  return(par)
+}
 
 pcfe<- function(d,par){
   e=exp(par[1]^2*exp(-d/exp(par[2])))
@@ -89,7 +91,7 @@ jaco<-function(X,dp,du,par,mc){
     re=sum(re)
     return(re)
   }
-
+  
   inte22<-function(d,par1,par2){
     re=exp(par1^2*cove(d,par2))*cove(d,par2)*exp(-par2)*d*(cove(d,par2)*exp(-par2)*d*par1^2+exp(-par2)*d-1)
     re=sum(re)
@@ -127,21 +129,27 @@ jaco<-function(X,dp,du,par,mc){
   j21=j12
   j22=par1^2*s3-rho*par1^2*i22
   jac=matrix(c(j11,j21,j12,j22),nrow=2,ncol=2)
-return(jac)}
+  return(jac)}
 
 
-min.cv <- mincontrast(observed = pcf(X), theoretical = function(x,par) exp( (par[1]^2)*exp(-x/par[2])), startpar = c(0.95,0.14))
+min.cv <- mincontrast(observed = pcf(X), theoretical = function(x,par) exp( (par[1]^2)*exp(-x/exp(par[2]))), startpar = c(sqrt(3),log(0.15)))
 pcf(X)
 
-min.cv$par
+
 help(mincontrast)
 min.cv
-par=c(0.7,log(0.15))
-re<-lavn(X,pcfe,dpcf,jaco,inipar=par,tol=0.000000000000001,kmax=200,mc=1000)
+s2 <- min.cv$par[1]
+l.phi <- min.cv$par[2]
+par=c(s2,l.phi)
+re<-lavn(X,pcfe,dpcf,jaco,inipar=par,tol= 1e-15,kmax=200,mc=1000, trace = TRUE)
 
-log(0.15)
 
-#codigo para probar la funci�n
+
+
+##### Considerar log(g) = \sum_{i = 1}^{n} sigma^2_{i}*exp(-h/phi_{i})
+
+########### 2 testing ###########
+#codigo para probar la función
 cove<- function(d,par2){
   e=exp(-d/exp(par2))
   return(e)
@@ -189,8 +197,8 @@ kmax=200
 mc=1000
 x0<-runifpoint(mc,win=W)
 y0<-runifpoint(mc,win=W)
-dU<-crosspairs(x0,y0,0.2,what="ijd")
-P<-closepairs(X,0.2,twice = TRUE)
+dU<-crosspairs(x0,y0,rmax,what="ijd")
+P<-closepairs(X,rmax,twice = TRUE)
 par=c(0,log(0.15))
 for(i in 1:kmax){
   r=c()
@@ -233,7 +241,7 @@ par2=log(0.15)
 
 for (i in 1:200){
   #obtenemos los valores de las integrales
- 
+  
   i11=(1/mc)^2*inte11(dU$d,par1,par2)
   i12=(1/mc)^2*inte12(dU$d,par1,par2)
   i22=(1/mc)^2*inte22(dU$d,par1,par2)
@@ -255,4 +263,3 @@ for (i in 1:200){
   par2=x[2]
   print(c(par1^2,exp(par2)))
 }
-
